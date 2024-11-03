@@ -5,6 +5,8 @@ const fs = require('fs');
 const path = require('path');
 const { restart } = require('nodemon');
 const { error } = require('console');
+const rateLimit = require('express-rate-limit');
+const {body, query, param, validationResult } = require('express-validator');
 
 const app = express();
 const PORT = 3000;
@@ -31,44 +33,61 @@ function loadCSVData() {
   });
 }
 
-
-app.get('/api/destination/:id', async (req, res) => {
-  try {
-    const data = await loadCSVData();
-    const destinationID = req.params.id;
-
-    const destination = data.find((item) => item.id === destinationID);
-    if (!destination) {
-      return res.status(404).json({ error: 'Destination not found' });
-    }
-
-    res.json(destination);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to load data' });
-  }
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 100
 });
+app.use(apiLimiter);
 
-app.get('/api/destination/:id/coordinates', async (req, res) => {
-    try{
-        const data = await loadCSVData();
-        const destinationID = req.params.id;
 
-        const destination = data.find((item) => item.id === destinationID);
-        if(!destination) {
-            return res.status(404).json({error: 'Destination not found'});
+app.get('/api/destination/:id', 
+    param('id').isInt({ min: 1 }).withMessage('Destination ID must be a positive integer'), // Validate ID as a positive integer
+    (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() }); 
         }
 
-        //console.log("Destination found:", destination);
+        const { id } = req.params;
 
-        const coordinates = {
-            latitude: destination.Latitude,
-            longitude: destination.Longitude,
-        };
+        loadCSVData().then(data => {
+            const destination = data.find(item => item.id === id);
+            if (!destination) {
+                return res.status(404).json({ error: `Destination with ID ${id} not found` });
+            }
+            res.json(destination);
+        }).catch(error => {
+            console.error("Error loading CSV data:", error);
+            res.status(500).json({ error: 'Failed to load data' });
+        });
+    });
 
-        res.json(coordinates);
-    }catch (error){
-        res.status(500).json({error: 'Failed to load data'});
-    }
+app.get('/api/destination/:id/coordinates', 
+    param('id').isInt({min: 1}).withMessage('Destination ID must be a positive integer'),
+    async (req, res) => {
+
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array()});
+        }
+
+        const {id} = req.params;
+
+        loadCSVData().then(data =>{
+            const destination = data.find(item => item.id === id);
+            if(!destination) {
+                return res.status(404).json({errors: `Destination with id ${id} not found`});
+            }
+
+            res.json({
+                latitude: destination.Latitude,
+                longitude: destination.Longitude
+            });
+        }).catch(error=>{
+            console.error("Error loading CSV data", error);
+            res.status(500).json({error: 'Failed to load data'});
+        });
+    
 });
 
 app.get('/api/countries', async (req, res) => {
@@ -83,39 +102,36 @@ app.get('/api/countries', async (req, res) => {
     }
 });
 
-app.get('/api/search', async(req, res) => {
-    
-    const {field, pattern, n } = req.query;
-
-
-    if(!field || !pattern){
-
-        return res.status(400).json({error: 'Field and pattern are required'});
-    }
-
-    try{
-        const data = await loadCSVData();
-
-        console.log("Available fields:", Object.keys(data[0]));
-
-        const normalizedField = Object.keys(data[0]).find(
-            (key) => key.trim().toLowerCase() === field.trim().toLowerCase()
-        );
-
-        if(!normalizedField) {
-            return res.status(400).json({error: `Field '${field}' does not exist in data`});
+app.get('/api/search', 
+    [
+        query('field').isIn(['Destination', 'Region', 'Country', 'Currency', 'Language', 'Category', 'Majority Religion', 'Safety', 'Cost of Living']).withMessage('Invalid field'),
+        query('pattern').isString().trim().escape().withMessage('Pattern must be a valid string'),
+        query('n').optional().isInt({min:1, max:50}).withMessage('n must be a positive integer between 1 and 50')
+    ],  
+    async(req, res) => {
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array()});
         }
 
-        const matches = data.filter((item) => 
-            item[normalizedField] && item[normalizedField].toLowerCase().includes(pattern.toLocaleLowerCase())
-        );
+        const { field, pattern } = req.query;
+        const n = req.query.n ? parseInt(req.query.n) : null;
 
+        try {
+            const data = await loadCSVData();
 
-        const limitedResults = n ? matches.slice(0, Number(n)) : matches;
-        res.json(limitedResults);
-    }catch (error){
-        res.status(500).json({error: 'Failed to load data'});
-    }
+            
+            const matches = data
+                .filter(item => item[field].toLowerCase().includes(pattern.toLowerCase()))
+                .slice(0, n || data.length); 
+
+            
+            res.json({ results: matches });
+        } catch (error) {
+            console.error("Error loading CSV data:", error);
+            res.status(500).json({ error: 'Failed to load data' });
+        }
+    
 
 });
 
@@ -123,33 +139,59 @@ const Datastore = require('nedb');
 
 const listsDb = new Datastore({ filename: path.join(__dirname, 'data', 'lists.db'), autoload: true });
 
-app.post('/api/lists', (req, res) => {
+app.post('/api/lists', 
+    [
+        body('name').isString().trim().isLength({min: 1, max: 25}).escape()
+            .withMessage('List name mus be a non-empty string up to 25 characters')
+    ],
+    (req, res) => {
+        const errors = validationResult(req);
+
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array()});
+        }
+
     const {name} = req.body;
 
-    if(!name){
-        return res.status(400).json({error: 'List name is required'});
-    
-    }
-
-    listsDb.findOne({name}, (err, existingList) => {
-        if(err){
-            return res.status(500).json({error: 'Database error'});
-        }
-        if(existingList){
-            return res.status(400).json({error: 'List with this name already exists'});
+    listsDb.findOne({ name }, (err, existingList) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
         }
 
-        const newList = {name, destinations: []};
-        listsDb.insert(newList, (err, doc) => {
-            if(err){
-                return res.status(500).json({error: 'failed to create list'});
+        if (existingList) {
+            return res.status(409).json({ error: `List with name '${name}' already exists` });
+        }
+
+        
+        const newList = { name, destinations: [] };
+        listsDb.insert(newList, (err, insertedList) => {
+            if (err) {
+                return res.status(500).json({ error: 'Failed to create list' });
             }
-            res.status(201).json({message: `List '${name}' created successfully,`, list:doc});
+
+            res.status(201).json({ message: `List '${name}' created successfully`, list: insertedList });
         });
     });
+
+ 
 });
 
-app.put('/api/lists/:name/destinations', async (req, res) => {
+app.put('/api/lists/:name/destinations', 
+    [
+        param('name').isString().trim().isLength({min: 1, max: 25}).escape()
+            .withMessage('List name must be a valid non-empty string up to 25 characters'),
+        body('destinationIDs').isArray({min: 1}).withMessage('Destination IDs must be non-empty array'),
+        body('destinationIDs.*').isString().trim().escape().withMessage('Each destination ID must be a string')
+
+    ],
+    
+    async (req, res) => {
+
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array() });
+        }
+
     const { name } = req.params;
     const { destinationIDs } = req.body;
 
@@ -205,25 +247,47 @@ app.put('/api/lists/:name/destinations', async (req, res) => {
     }
 });
 
-app.get('/api/lists/:name/destination-ids', (req, res) => {
+app.get('/api/lists/:name/destination-ids', 
+    [
+        param('name').isString().trim().isLength({min: 1, max: 25}).escape()
+            .withMessage('List name must be valid non-empty string up to 25 characters')
+    ],
+    
+    (req, res) => {
+
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array()});
+        }
 
     const {name} = req.params;
 
-    listsDb.findOne({name}, (err, list) =>{
-
-        if(err){
-            return res.status(500).json({error: 'Database error'});
+    listsDb.findOne({ name }, (err, list) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
         }
 
-        if(!list){
-            return res.status(404).json({error: `List with name '${name}' does not exist`});
+        if (!list) {
+            return res.status(404).json({ error: `List with name '${name}' does not exist` });
         }
 
-        res.json({destinationIDs: list.destinations});
+        res.json({ destinationIDs: list.destinations });
     });
+    
 });
 
-app.delete('/api/lists/:name/delete', (req, res) => {
+app.delete('/api/lists/:name/delete', 
+    [
+        param('name').isString().trim().isLength({min: 1, max: 25}).escape()
+            .withMessage('List name must be a valid non-empty string up to 25 characters')
+
+    ],
+    
+    (req, res) => {
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array()});
+        }
 
     const{name} = req.params;
 
@@ -244,7 +308,19 @@ app.delete('/api/lists/:name/delete', (req, res) => {
 
 });
 
-app.get('/api/lists/:name/destination-details', async(req, res) =>{
+app.get('/api/lists/:name/destination-details', 
+    [
+        param('name').isString().trim().isLength({min:1, max:25}).escape()
+            .withMessage('List name must be a valid non-empty string up to 50 characters')
+
+
+    ],
+    
+    async(req, res) =>{
+        const errors = validationResult(req);
+        if(!errors.isEmpty()){
+            return res.status(400).json({errors: errors.array() })
+        }
 
     const {name} = req.params;
 
