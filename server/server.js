@@ -171,7 +171,7 @@ app.put('/api/lists/:name/destinations', async (req, res) => {
             });
         }
 
-        // Find the list by name to get its _id
+        
         listsDb.findOne({ name }, (err, list) => {
             if (err) {
                 return res.status(500).json({ error: 'Database error' });
@@ -181,7 +181,7 @@ app.put('/api/lists/:name/destinations', async (req, res) => {
                 return res.status(404).json({ error: `List with name '${name}' does not exist` });
             }
 
-            // Update using _id to ensure no duplicates
+            
             listsDb.update(
                 { _id: list._id },
                 { $set: { destinations: validDestinationIDs } },
@@ -191,7 +191,7 @@ app.put('/api/lists/:name/destinations', async (req, res) => {
                         return res.status(500).json({ error: 'Failed to update destinations' });
                     }
                     
-                    // Reload the database to ensure updated data is immediately accessible
+                   
                     listsDb.persistence.compactDatafile();
                     listsDb.loadDatabase();
 
@@ -223,7 +223,71 @@ app.get('/api/lists/:name/destination-ids', (req, res) => {
     });
 });
 
+app.delete('/api/lists/:name/delete', (req, res) => {
 
+    const{name} = req.params;
+
+    listsDb.remove({name}, {}, (err, numRemoved) => {
+        if(err){
+            return res.status(500).json({error: 'Database error'});
+        }
+
+        if(numRemoved === 0){
+            return res.status(404).json({error: `List with name '${name}' does not exist`});
+
+        }
+
+        listsDb.persistence.compactDatafile();
+
+        res.json({message: `List '${name}' successfully deleted`});
+    });
+
+});
+
+app.get('/api/lists/:name/destination-details', async(req, res) =>{
+
+    const {name} = req.params;
+
+
+    listsDb.findOne({name}, async (err, list) =>{
+        if(err) {
+            return res.status(500).json({error: 'Database error'});
+        }
+        if(!list){
+            return res.status(404).json({error: `List with name '${name}' does not exist`});
+
+        }
+
+        try{
+            const data = await loadCSVData();
+
+            const destinationDetails = list.destinations.map(destinationID => {
+                const destination = data.find(item => item.id === destinationID);
+                if(destination){
+                    return{
+                        name: destination.Destination,
+                        region: destination.Region,
+                        country: destination.Country,
+                        coordinates: {
+                            latitude: destination.Latitude,
+                            longitude: destination.Longitude
+                        },
+                        currency: destination.Currency,
+                        language: destination.Langugae
+
+                    };
+                   
+                }
+                return null;
+            }).filter(detail => detail !== null);
+
+            res.json({destinationDetails});
+        }catch (error) {
+            console.error("Error Loading data: ", error);
+            res.status(500).json({error: 'Failed to load data'})
+        }
+    });
+});
 
 
 
