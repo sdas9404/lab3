@@ -118,7 +118,113 @@ app.get('/api/search', async(req, res) => {
     }
 
 });
+
+const Datastore = require('nedb');
+
+const listsDb = new Datastore({ filename: path.join(__dirname, 'data', 'lists.db'), autoload: true });
+
+app.post('/api/lists', (req, res) => {
+    const {name} = req.body;
+
+    if(!name){
+        return res.status(400).json({error: 'List name is required'});
     
+    }
+
+    listsDb.findOne({name}, (err, existingList) => {
+        if(err){
+            return res.status(500).json({error: 'Database error'});
+        }
+        if(existingList){
+            return res.status(400).json({error: 'List with this name already exists'});
+        }
+
+        const newList = {name, destinations: []};
+        listsDb.insert(newList, (err, doc) => {
+            if(err){
+                return res.status(500).json({error: 'failed to create list'});
+            }
+            res.status(201).json({message: `List '${name}' created successfully,`, list:doc});
+        });
+    });
+});
+
+app.put('/api/lists/:name/destinations', async (req, res) => {
+    const { name } = req.params;
+    const { destinationIDs } = req.body;
+
+    if (!destinationIDs || !Array.isArray(destinationIDs)) {
+        return res.status(400).json({ error: 'Destination IDs are required and must be an array' });
+    }
+
+    try {
+        const data = await loadCSVData();
+        const validIDs = new Set(data.map((item) => item.id));
+
+        const invalidIDs = destinationIDs.filter(id => !validIDs.has(id));
+        const validDestinationIDs = destinationIDs.filter(id => validIDs.has(id));
+
+        if (invalidIDs.length > 0) {
+            return res.status(400).json({
+                error: `Invalid destination IDs: ${invalidIDs.join(", ")}`,
+                message: "Please provide valid destination IDs only"
+            });
+        }
+
+        // Find the list by name to get its _id
+        listsDb.findOne({ name }, (err, list) => {
+            if (err) {
+                return res.status(500).json({ error: 'Database error' });
+            }
+
+            if (!list) {
+                return res.status(404).json({ error: `List with name '${name}' does not exist` });
+            }
+
+            // Update using _id to ensure no duplicates
+            listsDb.update(
+                { _id: list._id },
+                { $set: { destinations: validDestinationIDs } },
+                { multi: false, upsert: false },
+                (err, numReplaced) => {
+                    if (err) {
+                        return res.status(500).json({ error: 'Failed to update destinations' });
+                    }
+                    
+                    // Reload the database to ensure updated data is immediately accessible
+                    listsDb.persistence.compactDatafile();
+                    listsDb.loadDatabase();
+
+                    res.json({ message: `Destinations updated for list '${name}'`, destinations: validDestinationIDs });
+                }
+            );
+        });
+    } catch (error) {
+        console.error("Error loading CSV data:", error);
+        res.status(500).json({ error: 'Failed to load data' });
+    }
+});
+
+app.get('/api/lists/:name/destination-ids', (req, res) => {
+
+    const {name} = req.params;
+
+    listsDb.findOne({name}, (err, list) =>{
+
+        if(err){
+            return res.status(500).json({error: 'Database error'});
+        }
+
+        if(!list){
+            return res.status(404).json({error: `List with name '${name}' does not exist`});
+        }
+
+        res.json({destinationIDs: list.destinations});
+    });
+});
+
+
+
 
 
 app.listen(PORT, () => {
