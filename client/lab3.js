@@ -223,6 +223,59 @@ async function addDestinationsToList() {
     }
 }
 
+async function displayFavoriteList() {
+    const listName = document.getElementById('displayListName').value.trim();
+
+    if (!listName || listName.length > 25) {
+        showAlert("List name cannot be empty and must be 25 characters or less.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/lists/${encodeURIComponent(listName)}/destination-details`);
+
+        if (response.ok) {
+            const data = await response.json();
+            populateListTable(data.destinationDetails);
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.error}`);
+        }
+    } catch (error) {
+        console.error("Error retrieving list:", error);
+        showAlert("Failed to retrieve list.");
+    }
+}
+
+function populateListTable(destinations) {
+    const tableBody = document.getElementById('favoriteListTable').querySelector('tbody');
+    tableBody.innerHTML = ''; // Clear existing rows
+
+    destinations.forEach(destination => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${destination.Destination || ''}</td>
+            <td>${destination.Region || ''}</td>
+            <td>${destination.Country || ''}</td>
+            <td>${destination.Category || ''}</td>
+            <td>${destination.Latitude || ''}</td>
+            <td>${destination.Longitude || ''}</td>
+            <td>${destination["Approximate Annual Tourists"] || ''}</td>
+            <td>${destination.Currency || ''}</td>
+            <td>${destination["Majority Religion"] || ''}</td>
+            <td>${destination["Famous Foods"] || ''}</td>
+            <td>${destination.Language || ''}</td>
+            <td>${destination["Best Time to Visit"] || ''}</td>
+            <td>${destination["Cost of Living"] || ''}</td>
+            <td>${destination.Safety || ''}</td>
+            <td>${destination["Cultural Significance"] || ''}</td>
+            <td>${destination.Description || ''}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+
 
 
 
