@@ -1,0 +1,91 @@
+/* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f4f4f9;
+}
+
+/* Header styling */
+header h1 {
+    font-size: 2rem;
+    color: #333;
+    margin: 20px 0;
+    text-align: center;
+    font-family: 'Georgia', serif;
+}
+
+/* Search section styling */
+#search-section {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 20px;
+}
+
+#search-section label {
+    font-weight: bold;
+}
+
+#search-section select,
+#search-section input[type="text"],
+#search-section input[type="number"],
+#search-section button {
+    padding: 8px;
+    font-size: 1rem;
+}
+
+#search-section button {
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+
+#search-section button:hover {
+    background-color: #45a049;
+}
+
+/* Map styling */
+#map {
+    width: 90%;
+    height: 500px;
+    margin: 20px 0;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+}
+
+/* Table styling */
+#results-section {
+    width: 90%;
+    margin-bottom: 40px;
+}
+
+#results-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#results-table th, #results-table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+#results-table th {
+    background-color: #333;
+    color: white;
+    font-weight: bold;
+}
+
+#results-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+#results-table tr:hover {
+    background-color: #ddd;
+}

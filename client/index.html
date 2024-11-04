@@ -4,8 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script defer src="lab3.js"></script>
-    <title>SE 3316 - Lab 3</title>
+    <link rel="stylesheet" href="lab3.css">
+    <title>European Travel Destinations</title>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   </head>
   <body>
+
+    <header>
+        <h1>European Travel Destinations</h1>
+    </header>
+
+    <section id="search-section">
+      <label for="field">Search by: </label>
+      <select id="field">
+        <option value="Destination">Destination</option>
+        <option value="Region">Region</option>
+        <option value="Country">Country</option>
+        <option value="Language">Language</option>
+        <option value="Safety">Safety</option>
+      </select>
+
+      <input type="text" id="pattern" placeholder="Enter search term" />
+      <input type="number" id="numResults" max="1" placeholder="Number of results" />
+      <button id="search-btn">Search</button>
+    </section>
+
+    <div id="map" style="height: 500px; width: 100%;"></div>
+
+    <section id="results-section">
+      <table id="results-table">
+        <thead>
+          <tr>
+            <th>Destination</th>
+            <th>Region</th>
+            <th>Country</th>
+            <th>Category</th>
+            <th>Latitude</th>
+            <th>Longitude</th>
+            <th>Approximate Annual Tourists</th>
+            <th>Currency</th>
+            <th>Majority Religion</th>
+            <th>Famous Foods</th>
+            <th>Language</th>
+            <th>Best Time to Visit</th>
+            <th>Cost of Living</th>
+            <th>Safety</th>
+            <th>Cultural Significance</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+      </table>
+    </section>
+
+    <section id="pagination-controls">
+      <label for="resultsPerPage">Results per page:</label>
+      <select id="resultsPerPage">
+        <option value="5">5</option>
+        <option value="10">10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+      </select>
+
+      <button id="prevPage" disabled>Previous</button>
+      <span id="pageInfo">Page 1</span>
+      <button id="nextPage" disabled>Next</button>
+    </section>
+
+    <section id="favourite-lists">
+      <h2>Manage Favourite Lists</h2>
+
+
+      <div id="create-list-section">
+        <div id="create-list-section">
+          <h3>Create New Favorite List</h3>
+          <label for="newListName">List Name:</label>
+          <input type="text" id="newListName" placeholder="Enter list name (max 25 characters)">
+          <button onclick="createFavoriteList()">Create List</button>
+      </div>
+
+      <div id="add-destinations-section">
+        <h3>Add Destinations to Favorite List</h3>
+        <label for="addListName">List Name:</label>
+        <input type="text" id="addListName" placeholder="Enter existing list name">
+        <label for="destinationNames">Destination Names:</label>
+        <input type="text" id="destinationNames" placeholder="Enter destination names separated by commas">
+        <button onclick="addDestinationsToList()">Add Destinations</button>
+      </div>
+
+      <div id="display-list-section">
+        <h3>Display Favorite List</h3>
+        <label for="displayListName">List Name:</label>
+        <input type="text" id="displayListName" placeholder="Enter list name to display">
+        <button onclick="displayFavoriteList()">Display List</button>
+        
+        <table id="favoriteListTable">
+            <thead>
+                <tr>
+                    <th onclick="sortTable('Destination')">Destination</th>
+                    <th onclick="sortTable('Region')">Region</th>
+                    <th onclick="sortTable('Country')">Country</th>
+                    <th>Category</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Approximate Annual Tourists</th>
+                    <th>Currency</th>
+                    <th>Majority Religion</th>
+                    <th>Famous Foods</th>
+                    <th>Language</th>
+                    <th>Best Time to Visit</th>
+                    <th>Cost of Living</th>
+                    <th>Safety</th>
+                    <th>Cultural Significance</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+      </div>
+
+
+      <div id="delete-list-section">
+        <h3>Delete Favorite List</h3>
+        <label for="deleteListName">List Name:</label>
+        <input type="text" id="deleteListName" placeholder="Enter list name to delete">
+        <button onclick="deleteFavoriteList()">Delete List</button>
+      </div>
+
+    </section>
+
+
+
   </body>
 </html>
