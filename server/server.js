@@ -18,22 +18,35 @@ app.use(cors());
 
 
 function loadCSVData() {
-  const results = [];
-  const csvFilePath = path.join(__dirname, 'data', 'europe-destinations.csv');
+    const results = [];
+    const csvFilePath = path.join(__dirname, 'data', 'europe-destinations.csv');
 
-  return new Promise((resolve, reject) => {
-    let rowNumber = 1;
-    fs.createReadStream(csvFilePath)
-      .pipe(csv())
-      .on('data', (data) => {
-        data.id = rowNumber.toString(); 
-        results.push(data);
-        rowNumber++;
-      })
-      .on('end', () => resolve(results))
-      .on('error', (error) => reject(error));
-  });
+    return new Promise((resolve, reject) => {
+        let rowNumber = 1;
+        fs.createReadStream(csvFilePath)
+            .pipe(csv())
+            .on('data', (data) => {
+                
+                const normalizedData = {};
+                for (let key in data) {
+                    const cleanKey = key.replace(/'/g, '').trim(); 
+                    normalizedData[cleanKey] = data[key];
+                }
+                normalizedData.id = rowNumber.toString();
+                results.push(normalizedData);
+                rowNumber++;
+            })
+            .on('end', () => {
+                //console.log("Sample normalized data row 1:", results[0]); // Verify normalization
+                resolve(results);
+            })
+            .on('error', (error) => {
+                console.error("Error loading CSV data:", error);
+                reject(error);
+            });
+    });
 }
+
 
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -43,7 +56,7 @@ app.use(apiLimiter);
 
 
 app.get('/api/destination/:id', 
-    param('id').isInt({ min: 1 }).withMessage('Destination ID must be a positive integer'), // Validate ID as a positive integer
+    param('id').isInt({ min: 1 }).withMessage('Destination ID must be a positive integer'), 
     (req, res) => {
         const errors = validationResult(req);
         if (!errors.isEmpty()) {
@@ -108,12 +121,12 @@ app.get('/api/search',
     [
         query('field').isIn(['Destination', 'Region', 'Country', 'Currency', 'Language', 'Category', 'Majority Religion', 'Safety', 'Cost of Living']).withMessage('Invalid field'),
         query('pattern').isString().trim().escape().withMessage('Pattern must be a valid string'),
-        query('n').optional().isInt({min:1, max:50}).withMessage('n must be a positive integer between 1 and 50')
+        query('n').optional().isInt({ min: 1, max: 50 }).withMessage('n must be a positive integer between 1 and 50')
     ],  
-    async(req, res) => {
+    async (req, res) => {
         const errors = validationResult(req);
-        if(!errors.isEmpty()){
-            return res.status(400).json({errors: errors.array()});
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errors: errors.array() });
         }
 
         const { field, pattern } = req.query;
@@ -121,21 +134,20 @@ app.get('/api/search',
 
         try {
             const data = await loadCSVData();
+            //console.log("Data loaded for search:", data.length);
 
-            
             const matches = data
-                .filter(item => item[field].toLowerCase().includes(pattern.toLowerCase()))
-                .slice(0, n || data.length); 
+                .filter(item => item[field] && item[field].toString().trim().toLowerCase().includes(pattern.toLowerCase()))
+                .slice(0, n || data.length);
 
-            
+            //console.log("Matches found:", matches.length);
             res.json({ results: matches });
         } catch (error) {
             console.error("Error loading CSV data:", error);
             res.status(500).json({ error: 'Failed to load data' });
         }
-    
-
-});
+    }
+);
 
 const Datastore = require('nedb');
 
