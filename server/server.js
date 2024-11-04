@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const csv = require('csv-parser');
 const fs = require('fs');
@@ -13,6 +14,7 @@ const PORT = 3000;
 
 
 app.use(bodyParser.json());
+app.use(cors());
 
 
 function loadCSVData() {
@@ -349,7 +351,7 @@ app.get('/api/lists/:name/destination-details',
                             longitude: destination.Longitude
                         },
                         currency: destination.Currency,
-                        language: destination.Langugae
+                        language: destination.Language
 
                     };
                    
