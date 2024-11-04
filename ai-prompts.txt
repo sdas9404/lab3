@@ -1,1 +1,96 @@
 # Record all AI tools and prompts that you used to create substantial amounts of code.
+Ok I need you to make me a CRUD application that follows REST API principles, using Node.js and Express. The project Utilizes a Rest API backend and a basic (HTML, CSS, JS) frontend, with a Database to store a csv file. 
+
+Below is the basic description of the project when you understand that we can continue working on it. 
+
+Design and implement a ReST API for accessing travel destinations in Europe and all their attributes provided from CSV files (obtained from Kaggle ) together with an interactive map of the region using OpenStreetMap (OSM) as well as creating custom lists of destinations.
+Create a client (front-end) interface for interacting with the above API (pure HTML/CSS/JavaScript only. External libraries except those needed for OSM functionality or frameworks of any type are not allowed on client-side).
+Use asynchronous operations for showing both static and dynamic data.
+Use a single web-server/network endpoint for both the web application as well as ReST API.
+Apply input sanitization techniques.
+
+In this lab, you will implement a server API for accessing information about travel destinations in Europe along with a simple front-end for this API. CSV files containing this information are provided on Owl.
+
+When you understand this I'll give you the file structure template provided and more specificaitions about the project and we can continue from there
+
+
+Ok so this is the what the project template setup that my prof has provided. This is how the files are set out as and we must work in this framework. 
+
+Lab3-sdas9404(root)
+client directory
+    - img directory
+          - .gitignore file
+    - index.html
+    - lab3.js
+    -You may add a lab3.css file
+server directory
+     -data directory(probably where the DATA file would go)
+          -.gitignore file
+      -package-lock.json
+      -package.json
+      -server.js
+.gitignore file
+
+Please follow this file structure. If you understand that I'll continue with the rest of the project details
+
+1. Get all the information (all fields in europe-destinations.csv file) for a given  destination ID (e.g. row number).
+2. Get the geographical coordinates (latitude/longitude) of a given destination ID. 
+3. Get all available country names.
+4. Get the first n number of matching destination IDs for a given search pattern matching a given information field [e.g. match(field, pattern, n)]. If n is not given or the number of matches is less than n, then return all matches. 
+5. Create a new list with a given list name for saving a collection of destinations. Return an error if the list name exists.
+6. Save a list of destination IDs to a given list name. Return an error if the list name does not exist. Replace existing destination IDs with new values if the list exists.
+7. Get the list of destination IDs for a given list.
+8. Delete a list of destinations with a given name. Return an error if the given list doesn’t exist.
+9. Get a list of destination names, regions, countries, coordinates, currency and language of all destinations saved in a given list.
+10. Implement safeguards to prevent malicious attacks on the API. Examples include limits on size and range, preventing injection attacks etc and unintended side effects. Normal operations such as delete a list are not considered malicious.
+11.  A new data file (same name, same columns, different data) must be a drop-in replacement without any other changes.
+
+Follow the best practices of designing a RESTful API when defining the nouns, verbs and parameters. Data may be entered in any language supported by UTF-8 and the web service must preserve the language encoding. You may use a simple file-based storage for saving lists.
+
+If you understand these backend tasks I will go over the front end ones before starting to build. Remember I need you to remember in your memory each of these task items.
+
+
+
+The front-end must provide the following functionality. Please feel free to shape the UI as you would like to use a similar app.
+
+1. Ability to search destinations by name, region  or country and display all the information of the results and a an interactive map using OpenStreetMap.
+2. Ability to select the number of results shown at a time (e.g. 5, 10, 20 or 50) and navigate back and forth between the next set and previous set without refreshing the whole page, pagination
+3. Ability to create any number of favourite lists, retrieve them and display all the information of the  destinations in the list.
+4. Ability to sort all data in above lists by name, region or country.
+5. Use asynchronous functionality to query the back-end when the user interacts with the front end.
+6.  Sanitize all user input so that the display must not interpret any HTML or JavaScript that might be typed on to the text area.
+7. Allow any language as the list name and display the list name in the language it is entered. 
+8. Use all of the back-end functions using JavaScript code on the front-end. 
+
+Make sure that each back end functionality matches up with its front end, for a coherent user interface. 
+
+Also when generating the code make sure you do it in steps, cause I need to have 10 commits, that doesn't mean you need to do 10 steps. I just want it where you generate code for something, and then I'll say continue you continue. Make sure to keep points for me to check locally if its working or not, and then if I run into issues I will ask you. 
+
+First we should get all the dependencies installed. Also you make want to follow the development steps below. 
+Read through the entire lab handout. Read it multiple times until you have a clear picture of what is needed (not how).
+Write a JavaScript (Node.js) function for reading the CSV files and extracting data for items 2, 3 and 4 of the back-end requirements.
+Set up a Node.js and Express back-end for implementing item #1 in back-end functionality.
+Write a simple front-end (HTML+CSS+JavaScript) to test item #1 above and serve it within the same script above by using the functionality of serving a static file in Express (see class notes).
+Implement the back-end item #2.
+Add front-end functionality to test item #2.
+Implement back-end items #2 and #3 and combine steps 6-9 as a coherent user interface (UI).
+Implement the back-end functionality for items 4, 5 and 6.
+Add front-end functionality for the above step and create a coherent UI.
+Implement back-end functionality for items 7, 8, and 9. 
+Add front-end functionality for the above step.
+ 
+
+
+ the list of favourite should be added to a different table below, the entire creation, deletion, and adding names, displaying should be done below the general search table. 
+
+The workflow would be the user can type in the name of the new favourite list in a input bar, then click create. Then a alert should be shown saying that the favourite list has been created. 
+
+Below would be the destination adding section. Here the user would type in the list they would like to append to, and below have another input bar, where they would add one or multiple destination names using comma separated values. And then click add. And they would be given an alert saying that the items have been added. 
+
+Below that will be display section, where if the user enters the name of the fav list, it would show them the list in a table format with all the information for the regarding destination name. The columns name, region or country, should be sortable in the table, by clicking the header of the table. 
+
+below that would be the deletion section, where if the user enters the name of a existing list, they can delete it by clicking delete button. And then they're given a confirmation of the deletion. 
+
+All the errors that can occur in the api should be part of the client end JS. Such as you can't have a list name greater than 25 characters, if list doesn't exist you can't append to it, can't append destinations that don't exist, can't display list that doesn't exist, can't delete list that doesn't exist. 
+
+DO NOT FORGET THIS REQUIREMENT: allow any language as the list name and display the list name in the language it is entered. 
