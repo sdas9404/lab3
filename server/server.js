@@ -10,11 +10,12 @@ const rateLimit = require('express-rate-limit');
 const {body, query, param, validationResult } = require('express-validator');
 
 const app = express();
+app.use(cors());
 const PORT = 3000;
 
 
 app.use(bodyParser.json());
-app.use(cors());
+
 
 
 function loadCSVData() {

@@ -89,3 +89,114 @@ header h1 {
 #results-table tr:hover {
     background-color: #ddd;
 }
+
+/* General Styling for Favorite Lists Section */
+#favorite-lists {
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#favorite-lists h2 {
+    font-size: 1.5em;
+    text-align: center;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+#favorite-lists h3 {
+    font-size: 1.2em;
+    color: #444;
+    margin-bottom: 10px;
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 5px;
+}
+
+#favorite-lists div {
+    margin-bottom: 20px;
+}
+
+/* Label and Input Styling */
+#favorite-lists label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#favorite-lists input[type="text"] {
+    padding: 8px;
+    width: 60%;
+    max-width: 300px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
+#favorite-lists button {
+    padding: 8px 16px;
+    font-size: 0.9em;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#favorite-lists button:hover {
+    background-color: #0056b3;
+}
+
+/* Table Styling */
+#favoriteListTable {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+    overflow-x: auto;
+}
+
+#favoriteListTable th, #favoriteListTable td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+    font-size: 0.9em;
+}
+
+#favoriteListTable th {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+}
+
+#favoriteListTable th:hover {
+    background-color: #0056b3;
+}
+
+#favoriteListTable td {
+    background-color: #fff;
+}
+
+#favoriteListTable tr:nth-child(even) td {
+    background-color: #f2f2f2;
+}
+
+/* Alerts Styling */
+.alert {
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+

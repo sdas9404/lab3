@@ -157,34 +157,52 @@ function displayResultsInTable(results) {
 
 //Favourite list management 
 
-function showAlert(message) {
-    alert(message);
+function showAlert(message, isSuccess = true) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert ${isSuccess ? 'alert-success' : 'alert-error'}`;
+    alertDiv.textContent = message;
+
+    const favoriteListsSection = document.getElementById('favorite-lists');
+    
+    
+    if (favoriteListsSection) {
+        favoriteListsSection.insertBefore(alertDiv, favoriteListsSection.firstChild);
+        
+        setTimeout(() => {
+            alertDiv.remove();
+        }, 3000); 
+    } else {
+        console.warn("Favorite lists section not found for alert display.");
+    }
 }
+
 
 async function createFavoriteList() {
     const newListName = document.getElementById('newListName').value.trim();
 
     if (!newListName || newListName.length > 25) {
-        showAlert("List name cannot be empty and must be 25 characters or less.");
+        showAlert("List name cannot be empty and must be 25 characters or less.", false);
         return;
     }
 
     try {
-        const response = await fetch(`/api/lists`, {
+        const response = await fetch(`http://localhost:3000/api/lists`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: newListName })
         });
 
         if (response.ok) {
-            showAlert(`List "${newListName}" created successfully.`);
+            showAlert(`List "${newListName}" created successfully.`, true);
+        } else if (response.status === 409) { // Conflict error
+            showAlert(`List "${newListName}" already exists. Please choose a different name.`, false);
         } else {
             const error = await response.json();
-            showAlert(`Error: ${error.error}`);
+            showAlert(`Error: ${error.error}`, false);
         }
     } catch (error) {
         console.error("Error creating list:", error);
-        showAlert("Failed to create list.");
+        showAlert("Failed to create list.", false);
     }
 }
 
@@ -205,7 +223,7 @@ async function addDestinationsToList() {
     }
 
     try {
-        const response = await fetch(`/api/lists/${encodeURIComponent(listName)}/destinations`, {
+        const response = await fetch(`http://localhost:3000/api/lists/${encodeURIComponent(listName)}/destinations`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ destinations })
@@ -232,7 +250,7 @@ async function displayFavoriteList() {
     }
 
     try {
-        const response = await fetch(`/api/lists/${encodeURIComponent(listName)}/destination-details`);
+        const response = await fetch(`http://localhost:3000/api/lists/${encodeURIComponent(listName)}/destination-details`);
 
         if (response.ok) {
             const data = await response.json();
@@ -275,6 +293,52 @@ function populateListTable(destinations) {
     });
 }
 
+function sortTable(column) {
+    const table = document.getElementById('favoriteListTable');
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    
+    // Determine column index based on header text for sortable columns
+    const columnIndexMap = { Destination: 1, Region: 2, Country: 3 };
+    const columnIndex = columnIndexMap[column];
+
+    if (!columnIndex) return; 
+    
+
+    rows.sort((a, b) => {
+        const textA = a.querySelector(`td:nth-child(${columnIndex})`).textContent.trim().toLowerCase();
+        const textB = b.querySelector(`td:nth-child(${columnIndex})`).textContent.trim().toLowerCase();
+        return textA.localeCompare(textB);
+    });
+
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+}
+
+async function deleteFavoriteList() {
+    const listName = document.getElementById('deleteListName').value.trim();
+
+    if (!listName || listName.length > 25) {
+        showAlert("List name cannot be empty and must be 25 characters or less.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/lists/${encodeURIComponent(listName)}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            showAlert(`List "${listName}" deleted successfully.`);
+        } else {
+            const error = await response.json();
+            showAlert(`Error: ${error.error}`);
+        }
+    }catch (error){
+        console.error("Error deleting list: ", error);
+        showAlert("Failed to delete list.");
+    }
+}
 
 
 
